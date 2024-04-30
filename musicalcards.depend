@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1714514267 source:c:\users\megis\dropbox\koodaus2\github\musicalcards\main.cpp
+	<iostream>
+	<vector>
+	<algorithm>
+	<map>
+	<ctime>
+	<random>
+
