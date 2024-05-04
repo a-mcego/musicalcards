@@ -69,13 +69,13 @@ def create_card(rank, suit, filename):
         symbol_x, symbol_y = 95, 120
         
         if num_symbols % 2 == 1:
-            dwg.add(dwg.text(suit_symbol, insert=(150, 200), fill=text_color, font_size='30', font_family='Arial'))
+            dwg.add(dwg.text(suit_symbol, insert=(150, 200), fill=text_color, font_size='60', font_family='Arial'))
             
         
         if num_symbols >= 2:
             step_y = 180 / (num_symbols // 2)  # Distribute symbols vertically
             for i in range(num_symbols):
-                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, symbol_y + step_y * (i % (num_symbols // 2))), fill=text_color, font_size='30', font_family='Arial'))
+                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, symbol_y + step_y * (i % (num_symbols // 2))), fill=text_color, font_size='60', font_family='Arial'))
                 if i == num_symbols // 2 - 1:
                     symbol_x = 200  # Move to the right side for the next symbols
 
@@ -109,6 +109,7 @@ def create_card_back(filename):
 
 def convert_svg_to_png(svg_filename, png_filename):
     cairosvg.svg2png(url=svg_filename, write_to=png_filename)
+    print(f'Created {png_filename}')
 
 def main():
     suits = ['hearts', 'diamonds', 'clubs', 'spades']
@@ -120,14 +121,12 @@ def main():
             png_filename = f'godot/cards/{rank}_{suit}.png'
             create_card(rank, suit, svg_filename)
             convert_svg_to_png(svg_filename, png_filename)
-            print(f'Created {png_filename}')
 
     # Create Joker cards
     svg_filename = f'godot/cards/joker.svg'
     png_filename = f'godot/cards/joker.png'
     create_card('joker', 'joker', svg_filename)
     convert_svg_to_png(svg_filename, png_filename)
-    print(f'Created {png_filename}')
     
     create_card_back('godot/cards/back.svg')
     convert_svg_to_png('godot/cards/back.svg','godot/cards/back.png')
