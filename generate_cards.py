@@ -5,7 +5,7 @@ import numpy as np
 def create_card(rank, suit, filename):
     canvas_size = [300, 400]
 
-    dwg = svgwrite.Drawing(filename, size=(f'{canvas_size[0]}px', f'{canvas_size[1]}px'), profile='tiny')
+    dwg = svgwrite.Drawing(filename, size=(f'{canvas_size[0]}px', f'{canvas_size[1]}px'), profile='full')
     
     # Map suits to Unicode characters
     suit_symbols = {
@@ -66,16 +66,28 @@ def create_card(rank, suit, filename):
     else:
         # Add suit symbols in the center for numbered cards
         num_symbols = int(rank) if rank.isdigit() else 1
-        symbol_x, symbol_y = 95, 120
+        symbol_x, symbol_y = 100, 100
         
         if num_symbols % 2 == 1:
-            dwg.add(dwg.text(suit_symbol, insert=(150, 200), fill=text_color, font_size='60', font_family='Arial'))
+            dwg.add(dwg.text(suit_symbol, insert=(150, 200), fill=text_color, font_size='60', font_family='Arial', text_anchor="middle", dominant_baseline="middle"))
             
-        
-        if num_symbols >= 2:
-            step_y = 180 / (num_symbols // 2)  # Distribute symbols vertically
+        if num_symbols >= 2 and num_symbols < 4:
+            step_y = 100  # Distribute symbols vertically
             for i in range(num_symbols):
-                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, symbol_y + step_y * (i % (num_symbols // 2))), fill=text_color, font_size='60', font_family='Arial'))
+                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, symbol_y + step_y * (i % (num_symbols // 2))), fill=text_color, font_size='60', font_family='Arial',text_anchor="middle", dominant_baseline="middle"))
+                if i == num_symbols // 2 - 1:
+                    symbol_x = 200  # Move to the right side for the next symbols
+        if num_symbols >= 4:
+            step_y = 200 / ((num_symbols-2) // 2)  # Distribute symbols vertically
+            for i in range(num_symbols):
+                ypos = symbol_y + step_y * (i % (num_symbols // 2))
+
+                dwg_params = {}
+
+                if ypos > canvas_size[1]//2:
+                    dwg_params['transform_comp'] = f'rotate(180, {symbol_x}, {ypos})'
+            
+                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, ypos), fill=text_color, font_size='60', font_family='Arial',text_anchor="middle", dominant_baseline="middle", **dwg_params))
                 if i == num_symbols // 2 - 1:
                     symbol_x = 200  # Move to the right side for the next symbols
 
