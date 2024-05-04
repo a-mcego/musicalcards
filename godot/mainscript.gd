@@ -3,24 +3,22 @@ extends Node3D
 var mouse_position:Vector3
 
 var textures:Dictionary = {} #only use through LoadTexture
-func LoadTexture(name) -> ImageTexture:
+func LoadTexture(name) -> CompressedTexture2D:
 	if !textures.has(name):
-		var image = Image.new()
-		image.load(name)
-		textures[name] = ImageTexture.create_from_image(image)
+		textures[name] = load(name)
 	return textures[name]
 
 class UIElement:
 	var name:String
 	var id:int
-	var texture:ImageTexture
+	var texture
 	var draggable:bool = false
 	var dragging:bool = false
 	var drag_offset:Vector3 = Vector3.ZERO
 	var size:Vector2 = Vector2(15,20)
 	var mesh_instance:MeshInstance3D
 	
-	func _init(name:String, id:int, texture:ImageTexture, center:Vector2, size:Vector2) -> void:
+	func _init(name:String, id:int, texture, center:Vector2, size:Vector2) -> void:
 		self.name = name
 		self.id = id
 		self.texture = texture
@@ -38,7 +36,7 @@ class UIElement:
 		self.mesh_instance.translate(Vector3(center.x,center.y,-10))
 		self.mesh_instance.rotate_x(1.57079632679)
 	
-	func SetTexture(texture:ImageTexture) -> void:
+	func SetTexture(texture) -> void:
 		self.mesh_instance.material_override.albedo_texture = texture
 		
 	func Enable(value:bool) -> void:
