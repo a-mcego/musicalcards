@@ -38,6 +38,12 @@ class UIElement:
 	
 	func SetTexture(texture:ImageTexture):
 		self.mesh_instance.material_override.albedo_texture = texture
+		
+	func Enable(value:bool):
+		if value:
+			self.mesh_instance.material_override.albedo_color = Color(3,3,3,1)
+		else:
+			self.mesh_instance.material_override.albedo_color = Color(3,3,3,0)
 
 var uielements:Array = []
 
@@ -53,23 +59,63 @@ func init_cardnames():
 	
 
 var current_cards:Array = [null, null, null, null, null]
+var numbers:Array = []
+var gamestate = "start"
+var game_strings = {
+	"start":"Joggers-poggers",
+	"firstdeal":"Choose which cards to keep.",
+	"finished":"Congrats! Or not."
+}
+
+
+var locked:Array = [false,false,false,false,false]
 
 func deal():
-	var numbers:Array = []
-	for n in cardnames.size():
-		numbers.append(n)
-	numbers.shuffle()
-	for n in current_cards.size():
-		current_cards[n] = numbers[n]
-		var texname = "res://cards/back.png"
-		if current_cards[n] != null:
-			texname = "res://cards/" + cardnames[current_cards[n]] + ".png"
-		uielements[n].SetTexture(LoadTexture(texname))
+	if gamestate == "start" or gamestate == "finished":
+		locked = [false,false,false,false,false]
+		numbers.clear()
+		for n in cardnames.size():
+			numbers.append(n)
+		numbers.shuffle()
+		for n in current_cards.size():
+			current_cards[n] = numbers[n]
+			var texname = "res://cards/back.png"
+			if current_cards[n] != null:
+				texname = "res://cards/" + cardnames[current_cards[n]] + ".png"
+			uielements[n].SetTexture(LoadTexture(texname))
+		gamestate = "firstdeal"
+	elif gamestate == "firstdeal":
+		for n in current_cards.size():
+			if !locked[n]:
+				current_cards[n] = numbers[n+5]
+				var texname = "res://cards/back.png"
+				if current_cards[n] != null:
+					texname = "res://cards/" + cardnames[current_cards[n]] + ".png"
+				uielements[n].SetTexture(LoadTexture(texname))
+		gamestate = "finished"
+	
 	
 func Pressed(name:String):
 	if name == "deal":
 		deal()
 	
+	if gamestate == "firstdeal":
+		if name == "card0":
+			locked[0] = !locked[0]
+		if name == "card1":
+			locked[1] = !locked[1]
+		if name == "card2":
+			locked[2] = !locked[2]
+		if name == "card3":
+			locked[3] = !locked[3]
+		if name == "card4":
+			locked[4] = !locked[4]
+
+	for n in locked.size():
+		uielements[n+5].Enable(locked[n])
+		
+	get_child(1).text = game_strings[gamestate] #Label node
+		
 func _ready():
 	init_cardnames()
 	
@@ -83,6 +129,19 @@ func _ready():
 			Vector2(30,40)
 		)
 		add_child(card.mesh_instance)
+		uielements.append(card)
+
+	for n in 5:
+		var texname = "res://cards/kept.png"
+		
+		var card:UIElement = UIElement.new(
+			"kept"+str(n),
+			LoadTexture(texname), 
+			Vector2(32*(n-2),25),
+			Vector2(30,8)
+		)
+		add_child(card.mesh_instance)
+		card.Enable(false)
 		uielements.append(card)
 	
 	var dealButton = UIElement.new(

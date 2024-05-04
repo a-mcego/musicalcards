@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://kdtlap3ckp71"]
+[gd_scene load_steps=3 format=3 uid="uid://kdtlap3ckp71"]
 
 [ext_resource type="Script" path="res://mainscript.gd" id="1_umg7j"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_etb2c"]
+font_size = 64
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_umg7j")
@@ -10,3 +13,9 @@ projection = 1
 size = 100.0
 near = 1.0
 far = 100.0
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Joggers-poggers"
+label_settings = SubResource("LabelSettings_etb2c")
