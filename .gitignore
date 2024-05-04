@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+# Cards, run generate_cards.py to generate
+godot/cards/*

@@ -30,37 +30,37 @@ struct Card
 
 enum HandType
 {
-    Scale,
-    Solo,
-    Tutti,
+    FiveOfAKind,
     SoloScale,
     TuttiScale,
-    All,
-    ThreeOfAKind,
     FourOfAKind,
-    FiveOfAKind,
-    TwoPairs,
-    OnePair,
     SameRootNote,
+    Scale,
+    Solo,
     SameAccidental,
+    ThreeOfAKind,
+    TwoPairs,
+    Tutti,
+    OnePair,
+    All,
     TotalTypes
 };
 
 const char* HandNames[] =
 {
-    "Scale",
-    "Solo",
-    "Tutti",
+    "Five of a Kind",
     "SoloScale",
     "TuttiScale",
-    "All",
-    "Three of a Kind",
     "Four of a Kind",
-    "Five of a Kind",
-    "Two Pairs",
-    "One Pair",
     "Same Root Note",
+    "Scale",
+    "Solo",
     "Same Accidental",
+    "Three of a Kind",
+    "Two Pairs",
+    "Tutti",
+    "One Pair",
+    "Nothing :(",
     "TotalTypes"
 };
 
@@ -400,7 +400,10 @@ int analyze()
     return 0;
 }
 
-int main() {
+int main()
+{
+    //analyze();
+
     std::vector<Card> deck;
     std::vector<Card> hand(5);
 
@@ -431,7 +434,15 @@ int main() {
         {
             int chosen_id=0;
             cin >> chosen_id;
-            hand[choose] = deck[chosen_id-1];
+            if (chosen_id < 0 or chosen_id > 8)
+            {
+                --choose;
+                continue;
+            }
+            else
+            {
+                hand[choose] = deck[chosen_id-1];
+            }
         }
         cout << endl;
 
@@ -443,6 +454,7 @@ int main() {
             if (handCounts[i] > 0)
             {
                 std::cout << HandNames[i] << ": " << handCounts[i] << std::endl;
+                break;
             }
         }
         cout << endl;
