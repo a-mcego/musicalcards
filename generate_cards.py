@@ -1,9 +1,19 @@
 import svgwrite
+import os
 import cairosvg
+
 import numpy as np
 
 def create_card(rank, suit, filename):
     canvas_size = [300, 400]
+    
+    font = {}
+    corner_font_size = 60
+    
+    if suit == 'joker':
+        font['font_family'] = "Noto Emoji"
+        font['font_weight'] = "900"
+        corner_font_size = 40
     
     centerify = {"text_anchor":"middle", "dominant_baseline":"middle"}
 
@@ -15,7 +25,7 @@ def create_card(rank, suit, filename):
         'diamonds': '♦',
         'clubs': '♣',
         'spades': '♠',
-        'joker': '*'  # Using the Playing Card Black Joker symbol
+        'joker': ''
     }
     suit_symbol = suit_symbols[suit]
 
@@ -31,28 +41,25 @@ def create_card(rank, suit, filename):
         text_color = svgwrite.rgb(235, 89, 38)
     if suit in ['hearts']:
         text_color = svgwrite.rgb(228, 27, 73)
+    if suit == 'joker':
+        text_color = 'purple'
 
     # Card rank and suit in the top left corner
     rank_pos = (corner_radius+15, corner_radius+30)
     inv_rank_pos = (canvas_size[0]-rank_pos[0], canvas_size[1]-rank_pos[1])
     symbol_shift = 55
     
-    dwg.add(dwg.text(rank, insert=rank_pos, fill=text_color, font_size=60, letter_spacing="-5",**centerify))
-    dwg.add(dwg.text(suit_symbol, insert=(rank_pos[0], rank_pos[1]+symbol_shift), fill=text_color, font_size=60, **centerify))
+    dwg.add(dwg.text(rank, insert=rank_pos, fill=text_color, font_size=corner_font_size, letter_spacing="-5", **font,**centerify))
+    dwg.add(dwg.text(suit_symbol, insert=(rank_pos[0], rank_pos[1]+symbol_shift), fill=text_color, font_size=corner_font_size, **font, **centerify))
     
     # Card rank and suit in the bottom right corner (rotated)
-    dwg.add(dwg.text(rank, insert=inv_rank_pos, fill=text_color, font_size=60, transform=f'rotate(180, {inv_rank_pos[0]}, {inv_rank_pos[1]})', letter_spacing="-5", **centerify))
-    dwg.add(dwg.text(suit_symbol, insert=(inv_rank_pos[0], inv_rank_pos[1]-symbol_shift), fill=text_color, font_size=60, transform=f'rotate(180, {inv_rank_pos[0]}, {inv_rank_pos[1]-symbol_shift})', **centerify))
+    dwg.add(dwg.text(rank, insert=inv_rank_pos, fill=text_color, font_size=corner_font_size, transform=f'rotate(180, {inv_rank_pos[0]}, {inv_rank_pos[1]})', letter_spacing="-5", **font, **centerify))
+    dwg.add(dwg.text(suit_symbol, insert=(inv_rank_pos[0], inv_rank_pos[1]-symbol_shift), fill=text_color, font_size=corner_font_size, **font, transform=f'rotate(180, {inv_rank_pos[0]}, {inv_rank_pos[1]-symbol_shift})', **centerify))
     
     # Handle face cards separately
     # Face card graphics
     if suit == 'joker':
-        # Special design for Joker
-        text_color = 'purple'
-        #dwg.add(dwg.text('Joker', insert=(75, 200), fill=text_color, font_size=50))
-        # Example graphic for Joker (a jester hat)
-        dwg.add(dwg.path(d="M150 100 Q120 150 150 200 Q180 150 150 100", fill=text_color))
-        dwg.add(dwg.circle(center=(150, 100), r=10, fill=text_color))
+        dwg.add(dwg.text('🤡', insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='200', **font, **centerify))
     elif rank == 'J':
         # Example: Draw a simple crown for Jack
         dwg.add(dwg.path(d="M150 180 L130 220 L170 220 Z", fill=text_color))  # Simple triangle crown
@@ -75,7 +82,7 @@ def create_card(rank, suit, filename):
         bottomright = (canvas_size[0]-symbol_x, canvas_size[1]-symbol_y)
         sym_size = (bottomright[0]-topleft[0], bottomright[1]-topleft[1])
         if num_symbols == 1:
-            dwg.add(dwg.text(suit_symbol, insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='240', font_family='Arial', **centerify))
+            dwg.add(dwg.text(suit_symbol, insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='240', **centerify))
 
         elif num_symbols >= 2 and num_symbols < 11:
             drawpoints = []
@@ -167,7 +174,7 @@ def main():
     # Create Joker cards
     svg_filename = f'godot/cards/joker.svg'
     png_filename = f'godot/cards/joker.png'
-    create_card('joker', 'joker', svg_filename)
+    create_card('⭐', 'joker', svg_filename)
     convert_svg_to_png(svg_filename, png_filename)
     
     create_card_back('godot/cards/back.svg')
