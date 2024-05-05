@@ -28,7 +28,7 @@ class UIElement:
 	var draggable:bool = false
 	var dragging:bool = false
 	var drag_offset:Vector3 = Vector3.ZERO
-	var size:Vector2 = Vector2(15,20)
+	var size:Vector2
 	var mesh_instance:MeshInstance3D
 	
 	func _init(name:String, id:int, texture:CompressedTexture2D, center:Vector2, size:Vector2) -> void:
@@ -46,7 +46,7 @@ class UIElement:
 		material.albedo_texture = texture
 		material.transparency = true
 		self.mesh_instance.material_override = material
-		self.mesh_instance.translate(Vector3(center.x,center.y,-10))
+		self.mesh_instance.translate(Vector3(center.x,center.y,-10)) # -10 to make it visible on the z axis
 		self.mesh_instance.rotate_x(TAU/4.0)
 	
 	func SetTexture(texture) -> void:
@@ -81,7 +81,7 @@ class CardManager:
 	
 var card_manager = CardManager.new()
 
-var card_indices:Array = []
+var shuffled_card_indices:Array = []
 var game_state = "start"
 var game_strings = {
 	"start":"Joggers-poggers",
@@ -92,13 +92,13 @@ var game_strings = {
 func Deal():
 	if game_state == "start" or game_state == "finished":
 		card_manager.SetLock(false)
-		card_indices.clear()
+		shuffled_card_indices.clear()
 		for n in card_names.size():
-			card_indices.append(n)
-		card_indices.shuffle()
+			shuffled_card_indices.append(n)
+		shuffled_card_indices.shuffle()
 		for n in card_manager.states.size():
 			var state = card_manager.states[n]
-			state.id = card_indices[n]
+			state.id = shuffled_card_indices[n]
 			var texture_path = "res://cards/" + card_names[state.id] + ".png"
 			state.card_ui_element.SetTexture(GetTexture(texture_path))
 		game_state = "firstdeal"
@@ -106,7 +106,7 @@ func Deal():
 		var unused_card_id:int = HAND_SIZE
 		for state in card_manager.states:
 			if !state.locked:
-				state.id = card_indices[unused_card_id]
+				state.id = shuffled_card_indices[unused_card_id]
 				unused_card_id += 1
 				var texture_path = "res://cards/" + card_names[state.id] + ".png"
 				state.card_ui_element.SetTexture(GetTexture(texture_path))
