@@ -82,7 +82,7 @@ var game_strings = {
 	"finished":"Congrats! Or not."
 }
 
-func deal():
+func Deal():
 	if game_state == "start" or game_state == "finished":
 		card_manager.SetLock(false)
 		card_indices.clear()
@@ -92,8 +92,8 @@ func deal():
 		for n in card_manager.states.size():
 			var state = card_manager.states[n]
 			state.id = card_indices[n]
-			var texname = "res://cards/" + card_names[state.id] + ".png"
-			state.card_ui_element.SetTexture(GetTexture(texname))
+			var texture_path = "res://cards/" + card_names[state.id] + ".png"
+			state.card_ui_element.SetTexture(GetTexture(texture_path))
 		game_state = "firstdeal"
 	elif game_state == "firstdeal":
 		var unused_card_id:int = 5
@@ -101,21 +101,20 @@ func deal():
 			if !state.locked:
 				state.id = card_indices[unused_card_id]
 				unused_card_id += 1
-				var texname = "res://cards/" + card_names[state.id] + ".png"
-				state.card_ui_element.SetTexture(GetTexture(texname))
+				var texture_path = "res://cards/" + card_names[state.id] + ".png"
+				state.card_ui_element.SetTexture(GetTexture(texture_path))
 		game_state = "finished"
 	
-func Pressed(name:String, id:int):
+func EventPressed(name:String, id:int):
 	if name == "deal":
-		deal()
-	
-	if game_state == "firstdeal":
-		if name == "card":
+		Deal()
+	elif name == "card":
+		if game_state == "firstdeal":
 			card_manager.states[id].locked = !card_manager.states[id].locked 
 
-	for n in card_manager.states.size():
-		card_manager.states[n].kept_ui_element.SetVisible(card_manager.states[n].locked)
-		
+	# Update visuals
+	for state in card_manager.states:
+		state.kept_ui_element.SetVisible(state.locked)
 	get_child(1).text = game_strings[game_state] #Label node
 		
 func _ready():
@@ -166,7 +165,7 @@ func _input(event):
 				if event.pressed:
 					var currrect:Rect2 = ui_element.GetRect()
 					if currrect.has_point(Vector2(mouse_position.x, mouse_position.y)):
-						Pressed(ui_element.name, ui_element.id)
+						EventPressed(ui_element.name, ui_element.id)
 						if ui_element.draggable:
 							ui_element.dragging = true
 							ui_element.drag_offset = ui_element.mesh_instance.global_transform.origin - mouse_position
