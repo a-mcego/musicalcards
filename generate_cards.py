@@ -61,19 +61,17 @@ def create_card(rank, suit, filename):
     if suit == 'joker':
         dwg.add(dwg.text('🤡', insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='200', **font, **centerify))
     elif rank == 'J':
-        # Example: Draw a simple crown for Jack
-        dwg.add(dwg.path(d="M150 180 L130 220 L170 220 Z", fill=text_color))  # Simple triangle crown
-        dwg.add(dwg.circle(center=(150, 250), r=30, fill=text_color))  # Face
+        font['font_family'] = "Noto Emoji"
+        font['font_weight'] = "900"
+        dwg.add(dwg.text('⚔', insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='180', **font, **centerify))
     elif rank == 'Q':
-        # Example: Draw a simple tiara and necklace for Queen
-        dwg.add(dwg.path(d="M120 180 Q150 160 180 180 T240 180", fill=text_color))  # Tiara
-        dwg.add(dwg.circle(center=(150, 250), r=30, fill=text_color))  # Face
-        dwg.add(dwg.circle(center=(150, 300), r=10, fill=text_color))  # Necklace
+        font['font_family'] = "Noto Emoji"
+        font['font_weight'] = "900"
+        dwg.add(dwg.text('👸', insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='200', **font, **centerify))
     elif rank == 'K':
-        # Example: Draw a simple crown and beard for King
-        dwg.add(dwg.path(d="M120 180 L150 150 L180 180 L210 150 L240 180", fill=text_color))  # Crown
-        dwg.add(dwg.circle(center=(150, 250), r=30, fill=text_color))  # Face
-        dwg.add(dwg.rect(insert=(135, 280), size=('30', '20'), fill=text_color))  # Beard
+        font['font_family'] = "Noto Emoji"
+        font['font_weight'] = "900"
+        dwg.add(dwg.text('🤴', insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='200', **font, **centerify))
     else:
         # Add suit symbols in the center for numbered cards
         num_symbols = int(rank) if rank.isdigit() else 1
