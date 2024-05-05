@@ -1,5 +1,8 @@
 extends Node3D
 
+const HAND_SIZE:int = 5
+const CARD_SIZE:Vector2 = Vector2(30,40)
+
 var mouse_position:Vector3 #current mouse position, updated in _input()
 
 var loaded_textures:Dictionary = {} #only use through LoadTexture
@@ -44,7 +47,7 @@ class UIElement:
 		material.transparency = true
 		self.mesh_instance.material_override = material
 		self.mesh_instance.translate(Vector3(center.x,center.y,-10))
-		self.mesh_instance.rotate_x(1.57079632679)
+		self.mesh_instance.rotate_x(TAU/4.0)
 	
 	func SetTexture(texture) -> void:
 		self.mesh_instance.material_override.albedo_texture = texture
@@ -66,7 +69,11 @@ class CardManager:
 		var kept_ui_element = null
 		var card_ui_element = null
 
-	var states = [CardState.new(), CardState.new(), CardState.new(), CardState.new(), CardState.new()]
+	var states:Array
+	
+	func _init():
+		for _card_num in HAND_SIZE:
+			states.append(CardState.new())
 	
 	func SetLock(value:bool):
 		for state in states:
@@ -96,7 +103,7 @@ func Deal():
 			state.card_ui_element.SetTexture(GetTexture(texture_path))
 		game_state = "firstdeal"
 	elif game_state == "firstdeal":
-		var unused_card_id:int = 5
+		var unused_card_id:int = HAND_SIZE
 		for state in card_manager.states:
 			if !state.locked:
 				state.id = card_indices[unused_card_id]
@@ -120,32 +127,33 @@ func EventPressed(name:String, id:int):
 func _ready():
 	initialize_card_names()
 	
-	for n in 5:
-		var texname = "res://cards/back.png"
-		var ui_element:UIElement = UIElement.new(
+	#init UI elements
+	for n in HAND_SIZE:
+		var center_position:Vector2 = Vector2(32*(n-(HAND_SIZE-1)*0.5),0)
+		var card_ui_element:UIElement = UIElement.new(
 			"card",
 			n,
-			GetTexture(texname), 
-			Vector2(32*(n-2),0),
-			Vector2(30,40)
+			GetTexture("res://cards/back.png"), 
+			center_position,
+			CARD_SIZE
 		)
-		add_child(ui_element.mesh_instance)
-		card_manager.states[n].card_ui_element = ui_element
-		ui_elements.append(ui_element)
-
-	for n in 5:
-		var texname = "res://cards/kept.png"
-		var ui_element:UIElement = UIElement.new(
+		var kept_ui_element:UIElement = UIElement.new(
 			"kept",
 			n,
-			GetTexture(texname), 
-			Vector2(32*(n-2),25),
-			Vector2(30,8)
+			GetTexture("res://cards/kept.png"), 
+			Vector2(center_position.x, center_position.y + CARD_SIZE.y*0.625),
+			Vector2(CARD_SIZE.x,CARD_SIZE.y/5)
 		)
-		add_child(ui_element.mesh_instance)
-		ui_element.SetVisible(false)
-		ui_elements.append(ui_element)
-		card_manager.states[n].kept_ui_element = ui_element
+		kept_ui_element.SetVisible(false)
+
+		add_child(card_ui_element.mesh_instance)
+		add_child(kept_ui_element.mesh_instance)
+
+		ui_elements.append(card_ui_element)
+		ui_elements.append(kept_ui_element)
+
+		card_manager.states[n].card_ui_element = card_ui_element
+		card_manager.states[n].kept_ui_element = kept_ui_element
 	
 	var dealButton = UIElement.new(
 		"deal",
