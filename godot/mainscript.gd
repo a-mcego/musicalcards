@@ -63,6 +63,8 @@ class CardStates:
 	class CardState:
 		var locked:bool = false
 		var id = null
+		var kept_ui_element = null
+		var card_ui_element = null
 
 	var states = [CardState.new(), CardState.new(), CardState.new(), CardState.new(), CardState.new()]
 	
@@ -90,14 +92,14 @@ func deal():
 		for n in card_states.states.size():
 			card_states.states[n].id = numbers[n]
 			var texname = "res://cards/" + cardnames[card_states.states[n].id] + ".png"
-			uielements[n].SetTexture(LoadTexture(texname))
+			card_states.states[n].card_ui_element.SetTexture(LoadTexture(texname))
 		gamestate = "firstdeal"
 	elif gamestate == "firstdeal":
 		for n in card_states.states.size():
 			if !card_states.states[n].locked:
 				card_states.states[n].id = numbers[n+5]
 				var texname = "res://cards/" + cardnames[card_states.states[n].id] + ".png"
-				uielements[n].SetTexture(LoadTexture(texname))
+				card_states.states[n].card_ui_element.SetTexture(LoadTexture(texname))
 		gamestate = "finished"
 	
 func Pressed(name:String, id:int):
@@ -109,7 +111,7 @@ func Pressed(name:String, id:int):
 			card_states.states[id].locked = !card_states.states[id].locked 
 
 	for n in card_states.states.size():
-		uielements[n+5].Enable(card_states.states[n].locked)
+		card_states.states[n].kept_ui_element.Enable(card_states.states[n].locked)
 		
 	get_child(1).text = game_strings[gamestate] #Label node
 		
@@ -118,28 +120,30 @@ func _ready():
 	
 	for n in 5:
 		var texname = "res://cards/back.png"
-		var card:UIElement = UIElement.new(
+		var ui_element:UIElement = UIElement.new(
 			"card",
 			n,
 			LoadTexture(texname), 
 			Vector2(32*(n-2),0),
 			Vector2(30,40)
 		)
-		add_child(card.mesh_instance)
-		uielements.append(card)
+		add_child(ui_element.mesh_instance)
+		card_states.states[n].card_ui_element = ui_element
+		uielements.append(ui_element)
 
 	for n in 5:
 		var texname = "res://cards/kept.png"
-		var card:UIElement = UIElement.new(
+		var ui_element:UIElement = UIElement.new(
 			"kept",
 			n,
 			LoadTexture(texname), 
 			Vector2(32*(n-2),25),
 			Vector2(30,8)
 		)
-		add_child(card.mesh_instance)
-		card.Enable(false)
-		uielements.append(card)
+		add_child(ui_element.mesh_instance)
+		ui_element.Enable(false)
+		uielements.append(ui_element)
+		card_states.states[n].kept_ui_element = ui_element
 	
 	var dealButton = UIElement.new(
 		"deal",
