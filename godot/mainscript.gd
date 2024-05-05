@@ -11,15 +11,15 @@ func GetTexture(name) -> CompressedTexture2D:
 		loaded_textures[name] = load(name)
 	return loaded_textures[name]
 
-var card_names:Array = []
+var card_texture_names:Array = []
 func initialize_card_names():
-	card_names.clear()
-	card_names.append("joker")
+	card_texture_names.clear()
+	card_texture_names.append("joker")
 	var ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 	var suits = ["spades", "hearts", "diamonds", "clubs"];
 	for suit in suits:
 		for rank in ranks:
-			card_names.append(rank + "_" + suit);
+			card_texture_names.append(rank + "_" + suit);
 
 class UIElement:
 	var name:String
@@ -93,13 +93,13 @@ func Deal():
 	if game_state == "start" or game_state == "finished":
 		card_manager.SetLock(false)
 		shuffled_card_indices.clear()
-		for n in card_names.size():
+		for n in card_texture_names.size():
 			shuffled_card_indices.append(n)
 		shuffled_card_indices.shuffle()
 		for n in card_manager.states.size():
 			var state = card_manager.states[n]
 			state.id = shuffled_card_indices[n]
-			var texture_path = "res://cards/" + card_names[state.id] + ".png"
+			var texture_path = "res://cards/" + card_texture_names[state.id] + ".png"
 			state.card_ui_element.SetTexture(GetTexture(texture_path))
 		game_state = "firstdeal"
 	elif game_state == "firstdeal":
@@ -108,7 +108,7 @@ func Deal():
 			if !state.locked:
 				state.id = shuffled_card_indices[unused_card_id]
 				unused_card_id += 1
-				var texture_path = "res://cards/" + card_names[state.id] + ".png"
+				var texture_path = "res://cards/" + card_texture_names[state.id] + ".png"
 				state.card_ui_element.SetTexture(GetTexture(texture_path))
 		game_state = "finished"
 	
