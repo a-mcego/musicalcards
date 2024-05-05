@@ -14,3 +14,7 @@ config/name="muscard"
 run/main_scene="res://mainscene.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Util="*res://util.gd"

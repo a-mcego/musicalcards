@@ -3,6 +3,8 @@ extends Node3D
 const HAND_SIZE:int = 5
 const CARD_SIZE:Vector2 = Vector2(30,40)
 
+@onready var Util = get_node("Util")
+
 var mouse_position:Vector3 #current mouse position, updated in _input()
 
 var loaded_textures:Dictionary = {} #only use through LoadTexture
@@ -79,7 +81,84 @@ class CardManager:
 		for state in states:
 			state.locked = value
 	
-var card_manager = CardManager.new()
+	#evaluates the current hand inside the cardstate
+	func EvaluateHand(card_texture_names) -> String:
+		var ranks = []
+		var suits = []
+		var joker_count = 0
+
+		# Collect ranks and suits, count jokers
+		for state in states:
+			var card_name = card_texture_names[state.id]
+			if card_name == "joker":
+				joker_count += 1
+			else:
+				var parts = card_name.split("_")
+				ranks.append(parts[0])
+				suits.append(parts[1])
+
+		# Convert rank strings to values and sort
+		var rank_values = ranks.map(func(r): return "A23456789TJQK".find(r) + 1 if r != "10" else 10)
+		rank_values.sort()
+
+		# Determine the hand type
+		var hand_type = "Nothing"
+		if joker_count == 0:
+			hand_type = determine_hand_type(rank_values, suits)
+		else:
+			# Try all possible replacements for the joker
+			for possible_rank in range(1, 15):  # Ace can be high or low
+				for possible_suit in ["hearts", "diamonds", "clubs", "spades"]:
+					var test_ranks = rank_values + [possible_rank]
+					var test_suits = suits + [possible_suit]
+					test_ranks.sort()
+					var possible_hand = determine_hand_type(test_ranks, test_suits)
+					if hand_rank(possible_hand) > hand_rank(hand_type):
+						hand_type = possible_hand
+
+		return hand_type
+
+	func determine_hand_type(ranks, suits):
+		var counts = {}
+		for rank in ranks:
+			counts[rank] = counts.get(rank, 0) + 1
+
+		var values = counts.values()
+		var has_flush:bool = true
+		for s in suits:
+			has_flush = has_flush and (s == suits[0])
+		var has_straight = is_straight(ranks)
+
+		if has_flush and has_straight:
+			return "Straight Flush"
+		elif 4 in values:
+			return "Four of a Kind"
+		elif 3 in values and 2 in values:
+			return "Full House"
+		elif has_flush:
+			return "Flush"
+		elif has_straight:
+			return "Straight"
+		elif 3 in values:
+			return "Three of a Kind"
+		elif values.count(2) == 2:
+			return "Two Pair"
+		elif 2 in values:
+			return "One Pair"
+		return "Nothing :("
+
+	func is_straight(ranks:Array) -> bool:
+		var rank_set:Dictionary = Util.make_set(ranks)
+		if len(rank_set) != len(ranks):
+			return false
+		var is_ace_high:bool = rank_set.has(1) and rank_set.has(10) and rank_set.has(11) and rank_set.has(12) and rank_set.has(13) 
+			
+		return Util.list_max(ranks) - Util.list_min(ranks) == 4 or is_ace_high  # Ace high straight
+
+	func hand_rank(hand_type):
+		return ["Nothing :(", "One Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush"].find(hand_type)
+
+var card_manager:CardManager = CardManager.new()
 
 var shuffled_card_indices:Array = []
 var game_state = "start"
@@ -104,13 +183,19 @@ func Deal():
 		game_state = "firstdeal"
 	elif game_state == "firstdeal":
 		var unused_card_id:int = HAND_SIZE
+		
+		# replace the non-locked cards
 		for state in card_manager.states:
 			if !state.locked:
 				state.id = shuffled_card_indices[unused_card_id]
 				unused_card_id += 1
 				var texture_path = "res://cards/" + card_texture_names[state.id] + ".png"
 				state.card_ui_element.SetTexture(GetTexture(texture_path))
+		
+		var hand_type:String = card_manager.EvaluateHand(card_texture_names)
+		
 		game_state = "finished"
+		game_strings[game_state] = hand_type
 	
 func EventPressed(name:String, id:int):
 	if name == "deal":
