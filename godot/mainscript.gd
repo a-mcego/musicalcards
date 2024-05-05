@@ -238,7 +238,7 @@ func _ready():
 	
 	#init UI elements
 	for n in HAND_SIZE:
-		var center_position:Vector2 = Vector2(32*(n-(HAND_SIZE-1)*0.5),0)
+		var center_position:Vector2 = Vector2(CARD_SIZE.x*(n-(HAND_SIZE-1)*0.5),0)
 		var card_ui_element:UIElement = UIElement.new(
 			"card",
 			n,
