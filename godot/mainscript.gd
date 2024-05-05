@@ -1,34 +1,34 @@
 extends Node3D
 
-var mouse_position:Vector3
+var mouse_position:Vector3 #current mouse position, updated in _input()
 
-var textures:Dictionary = {} #only use through LoadTexture
-func LoadTexture(name) -> CompressedTexture2D:
-	if !textures.has(name):
-		textures[name] = load(name)
-	return textures[name]
+var loaded_textures:Dictionary = {} #only use through LoadTexture
+func GetTexture(name) -> CompressedTexture2D:
+	if !loaded_textures.has(name):
+		loaded_textures[name] = load(name)
+	return loaded_textures[name]
 
-var cardnames:Array = []
-func init_cardnames():
-	cardnames.clear()
-	cardnames.append("joker")
+var card_names:Array = []
+func initialize_card_names():
+	card_names.clear()
+	card_names.append("joker")
 	var ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 	var suits = ["spades", "hearts", "diamonds", "clubs"];
 	for suit in suits:
 		for rank in ranks:
-			cardnames.append(rank + "_" + suit);
+			card_names.append(rank + "_" + suit);
 
 class UIElement:
 	var name:String
 	var id:int
-	var texture
+	var texture:CompressedTexture2D
 	var draggable:bool = false
 	var dragging:bool = false
 	var drag_offset:Vector3 = Vector3.ZERO
 	var size:Vector2 = Vector2(15,20)
 	var mesh_instance:MeshInstance3D
 	
-	func _init(name:String, id:int, texture, center:Vector2, size:Vector2) -> void:
+	func _init(name:String, id:int, texture:CompressedTexture2D, center:Vector2, size:Vector2) -> void:
 		self.name = name
 		self.id = id
 		self.texture = texture
@@ -49,7 +49,7 @@ class UIElement:
 	func SetTexture(texture) -> void:
 		self.mesh_instance.material_override.albedo_texture = texture
 		
-	func Enable(value:bool) -> void:
+	func SetVisible(value:bool) -> void:
 		self.mesh_instance.material_override.albedo_color.a = 1.0 if value else 0.0
 			
 	func GetRect() -> Rect2:
@@ -57,9 +57,9 @@ class UIElement:
 		var meshpos2d = Vector2(meshpos3d.x-self.size.x*0.5, meshpos3d.y-self.size.y*0.5)
 		return Rect2(meshpos2d, self.size)
 		
-var uielements:Array = []
+var ui_elements:Array = []
 
-class CardStates:
+class CardManager:
 	class CardState:
 		var locked:bool = false
 		var id = null
@@ -72,10 +72,10 @@ class CardStates:
 		for state in states:
 			state.locked = value
 	
-var card_states = CardStates.new()
+var card_manager = CardManager.new()
 
-var numbers:Array = []
-var gamestate = "start"
+var card_indices:Array = []
+var game_state = "start"
 var game_strings = {
 	"start":"Joggers-poggers",
 	"firstdeal":"Choose which cards to keep.",
@@ -83,96 +83,96 @@ var game_strings = {
 }
 
 func deal():
-	if gamestate == "start" or gamestate == "finished":
-		card_states.SetLock(false)
-		numbers.clear()
-		for n in cardnames.size():
-			numbers.append(n)
-		numbers.shuffle()
-		for n in card_states.states.size():
-			var state = card_states.states[n]
-			state.id = numbers[n]
-			var texname = "res://cards/" + cardnames[state.id] + ".png"
-			state.card_ui_element.SetTexture(LoadTexture(texname))
-		gamestate = "firstdeal"
-	elif gamestate == "firstdeal":
+	if game_state == "start" or game_state == "finished":
+		card_manager.SetLock(false)
+		card_indices.clear()
+		for n in card_names.size():
+			card_indices.append(n)
+		card_indices.shuffle()
+		for n in card_manager.states.size():
+			var state = card_manager.states[n]
+			state.id = card_indices[n]
+			var texname = "res://cards/" + card_names[state.id] + ".png"
+			state.card_ui_element.SetTexture(GetTexture(texname))
+		game_state = "firstdeal"
+	elif game_state == "firstdeal":
 		var unused_card_id:int = 5
-		for state in card_states.states:
+		for state in card_manager.states:
 			if !state.locked:
-				state.id = numbers[unused_card_id]
+				state.id = card_indices[unused_card_id]
 				unused_card_id += 1
-				var texname = "res://cards/" + cardnames[state.id] + ".png"
-				state.card_ui_element.SetTexture(LoadTexture(texname))
-		gamestate = "finished"
+				var texname = "res://cards/" + card_names[state.id] + ".png"
+				state.card_ui_element.SetTexture(GetTexture(texname))
+		game_state = "finished"
 	
 func Pressed(name:String, id:int):
 	if name == "deal":
 		deal()
 	
-	if gamestate == "firstdeal":
+	if game_state == "firstdeal":
 		if name == "card":
-			card_states.states[id].locked = !card_states.states[id].locked 
+			card_manager.states[id].locked = !card_manager.states[id].locked 
 
-	for n in card_states.states.size():
-		card_states.states[n].kept_ui_element.Enable(card_states.states[n].locked)
+	for n in card_manager.states.size():
+		card_manager.states[n].kept_ui_element.SetVisible(card_manager.states[n].locked)
 		
-	get_child(1).text = game_strings[gamestate] #Label node
+	get_child(1).text = game_strings[game_state] #Label node
 		
 func _ready():
-	init_cardnames()
+	initialize_card_names()
 	
 	for n in 5:
 		var texname = "res://cards/back.png"
 		var ui_element:UIElement = UIElement.new(
 			"card",
 			n,
-			LoadTexture(texname), 
+			GetTexture(texname), 
 			Vector2(32*(n-2),0),
 			Vector2(30,40)
 		)
 		add_child(ui_element.mesh_instance)
-		card_states.states[n].card_ui_element = ui_element
-		uielements.append(ui_element)
+		card_manager.states[n].card_ui_element = ui_element
+		ui_elements.append(ui_element)
 
 	for n in 5:
 		var texname = "res://cards/kept.png"
 		var ui_element:UIElement = UIElement.new(
 			"kept",
 			n,
-			LoadTexture(texname), 
+			GetTexture(texname), 
 			Vector2(32*(n-2),25),
 			Vector2(30,8)
 		)
 		add_child(ui_element.mesh_instance)
-		ui_element.Enable(false)
-		uielements.append(ui_element)
-		card_states.states[n].kept_ui_element = ui_element
+		ui_element.SetVisible(false)
+		ui_elements.append(ui_element)
+		card_manager.states[n].kept_ui_element = ui_element
 	
 	var dealButton = UIElement.new(
 		"deal",
 		0,
-		LoadTexture("res://cards/deal.png"),
+		GetTexture("res://cards/deal.png"),
 		Vector2(64,-32),
 		Vector2(24,8)
 	)
 	add_child(dealButton.mesh_instance)
-	uielements.append(dealButton)
+	ui_elements.append(dealButton)
 
 func _input(event):
-	for uielement in uielements:
+	for ui_element in ui_elements:
 		if event is InputEventMouseButton:
 			mouse_position = get_viewport().get_camera_3d().project_ray_origin(event.position)
 			if event.button_index == MouseButton.MOUSE_BUTTON_LEFT:
 				if event.pressed:
-					var currrect:Rect2 = uielement.GetRect()
+					var currrect:Rect2 = ui_element.GetRect()
 					if currrect.has_point(Vector2(mouse_position.x, mouse_position.y)):
-						Pressed(uielement.name, uielement.id)
-						if uielement.draggable:
-							uielement.dragging = true
-							uielement.drag_offset = uielement.mesh_instance.global_transform.origin - mouse_position
+						Pressed(ui_element.name, ui_element.id)
+						if ui_element.draggable:
+							ui_element.dragging = true
+							ui_element.drag_offset = ui_element.mesh_instance.global_transform.origin - mouse_position
 				else:
-					uielement.dragging = false
+					ui_element.dragging = false
 
-		elif event is InputEventMouseMotion and uielement.dragging:
+		elif event is InputEventMouseMotion and ui_element.dragging:
 			mouse_position = get_viewport().get_camera_3d().project_ray_origin(event.position)
-			uielement.mesh_instance.global_transform.origin = mouse_position + uielement.drag_offset
+			ui_element.mesh_instance.global_transform.origin = mouse_position + ui_element.drag_offset
