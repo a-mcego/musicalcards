@@ -8,6 +8,16 @@ func LoadTexture(name) -> CompressedTexture2D:
 		textures[name] = load(name)
 	return textures[name]
 
+var cardnames:Array = []
+func init_cardnames():
+	cardnames.clear()
+	cardnames.append("joker")
+	var ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+	var suits = ["spades", "hearts", "diamonds", "clubs"];
+	for suit in suits:
+		for rank in ranks:
+			cardnames.append(rank + "_" + suit);
+
 class UIElement:
 	var name:String
 	var id:int
@@ -48,18 +58,20 @@ class UIElement:
 		return Rect2(meshpos2d, self.size)
 		
 var uielements:Array = []
-var cardnames:Array = []
 
-func init_cardnames():
-	cardnames.clear()
-	cardnames.append("joker")
-	var ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-	var suits = ["spades", "hearts", "diamonds", "clubs"];
-	for suit in suits:
-		for rank in ranks:
-			cardnames.append(rank + "_" + suit);
+class CardStates:
+	class CardState:
+		var locked:bool = false
+		var id = null
 
-var current_cards:Array = [null, null, null, null, null]
+	var states = [CardState.new(), CardState.new(), CardState.new(), CardState.new(), CardState.new()]
+	
+	func SetLock(value:bool):
+		for state in states:
+			state.locked = value
+	
+var card_states = CardStates.new()
+
 var numbers:Array = []
 var gamestate = "start"
 var game_strings = {
@@ -68,25 +80,23 @@ var game_strings = {
 	"finished":"Congrats! Or not."
 }
 
-var locked_cards:Array = [false,false,false,false,false]
-
 func deal():
 	if gamestate == "start" or gamestate == "finished":
-		locked_cards = [false,false,false,false,false]
+		card_states.SetLock(false)
 		numbers.clear()
 		for n in cardnames.size():
 			numbers.append(n)
 		numbers.shuffle()
-		for n in current_cards.size():
-			current_cards[n] = numbers[n]
-			var texname = "res://cards/" + cardnames[current_cards[n]] + ".png"
+		for n in card_states.states.size():
+			card_states.states[n].id = numbers[n]
+			var texname = "res://cards/" + cardnames[card_states.states[n].id] + ".png"
 			uielements[n].SetTexture(LoadTexture(texname))
 		gamestate = "firstdeal"
 	elif gamestate == "firstdeal":
-		for n in current_cards.size():
-			if !locked_cards[n]:
-				current_cards[n] = numbers[n+5]
-				var texname = "res://cards/" + cardnames[current_cards[n]] + ".png"
+		for n in card_states.states.size():
+			if !card_states.states[n].locked:
+				card_states.states[n].id = numbers[n+5]
+				var texname = "res://cards/" + cardnames[card_states.states[n].id] + ".png"
 				uielements[n].SetTexture(LoadTexture(texname))
 		gamestate = "finished"
 	
@@ -96,10 +106,10 @@ func Pressed(name:String, id:int):
 	
 	if gamestate == "firstdeal":
 		if name == "card":
-			locked_cards[id] = !locked_cards[id]
+			card_states.states[id].locked = !card_states.states[id].locked 
 
-	for n in locked_cards.size():
-		uielements[n+5].Enable(locked_cards[n])
+	for n in card_states.states.size():
+		uielements[n+5].Enable(card_states.states[n].locked)
 		
 	get_child(1).text = game_strings[gamestate] #Label node
 		
