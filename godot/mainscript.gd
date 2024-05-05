@@ -3,6 +3,13 @@ extends Node3D
 const HAND_SIZE:int = 5
 const CARD_SIZE:Vector2 = Vector2(30,40)
 
+const DECK_DEFINITION:Dictionary = {
+	"suits": ["spades", "hearts", "diamonds", "clubs"],
+	"ranks": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+	"ace_high_straight": true,
+	"has_joker": true
+}
+
 @onready var Util = get_node("Util")
 
 var mouse_position:Vector3 #current mouse position, updated in _input()
@@ -16,12 +23,12 @@ func GetTexture(name) -> CompressedTexture2D:
 var card_texture_names:Array = []
 func initialize_card_names():
 	card_texture_names.clear()
-	card_texture_names.append("joker")
-	var ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-	var suits = ["spades", "hearts", "diamonds", "clubs"];
-	for suit in suits:
-		for rank in ranks:
-			card_texture_names.append(rank + "_" + suit);
+	for suit in DECK_DEFINITION.suits:
+		for rank in DECK_DEFINITION.ranks:
+			card_texture_names.append(rank + "_" + suit)
+
+	if DECK_DEFINITION.has_joker:
+		card_texture_names.append("joker")
 
 class UIElement:
 	var name:String
@@ -64,21 +71,21 @@ class UIElement:
 		
 var ui_elements:Array = []
 
-class CardManager:
+class HandManager:
 	class CardState:
 		var locked:bool = false
 		var id = null
 		var kept_ui_element = null
 		var card_ui_element = null
 
-	var states:Array
+	var hand_states:Array
 	
 	func _init():
 		for _card_num in HAND_SIZE:
-			states.append(CardState.new())
+			hand_states.append(CardState.new())
 	
 	func SetLock(value:bool):
-		for state in states:
+		for state in hand_states:
 			state.locked = value
 	
 	const hand_type_strings = [
@@ -100,7 +107,7 @@ class CardManager:
 		var joker_count:int = 0
 
 		# Collect ranks and suits, count jokers
-		for state in states:
+		for state in hand_states:
 			var card_name = card_texture_names[state.id]
 			if card_name == "joker":
 				joker_count += 1
@@ -110,7 +117,7 @@ class CardManager:
 				suits.append(parts[1])
 
 		# Convert rank strings to values and sort
-		var rank_values = ranks.map(func(r): return "A23456789TJQK".find(r) if r != "10" else 9)
+		var rank_values = ranks.map(func(r): return DECK_DEFINITION.ranks.find(r))
 		rank_values.sort()
 
 		# Determine the hand type
@@ -119,8 +126,8 @@ class CardManager:
 			hand_type = determine_hand_type(rank_values, suits)
 		else:
 			# Try all possible replacements for the joker
-			for possible_rank in 13:
-				for possible_suit in ["hearts", "diamonds", "clubs", "spades"]:
+			for possible_rank in DECK_DEFINITION.ranks.size():
+				for possible_suit in DECK_DEFINITION.suits:
 					var test_ranks = rank_values + [possible_rank]
 					var test_suits = suits + [possible_suit]
 					test_ranks.sort()
@@ -163,14 +170,19 @@ class CardManager:
 		var rank_set:Dictionary = Util.make_set(ranks)
 		if len(rank_set) != len(ranks):
 			return false
-		var is_ace_high:bool = rank_set.has(0) and rank_set.has(9) and rank_set.has(10) and rank_set.has(11) and rank_set.has(12) 
+		var is_ace_high:bool = DECK_DEFINITION.ace_high_straight
+		if is_ace_high:
+			is_ace_high = is_ace_high and rank_set.has(0)
+			var n_ranks:int = DECK_DEFINITION.ranks.size()
+			for rank in range(n_ranks-(HAND_SIZE-1), n_ranks):
+				is_ace_high = is_ace_high and rank_set.has(rank)
 			
 		return Util.list_max(ranks) - Util.list_min(ranks) == 4 or is_ace_high  # Ace high straight
 
 	func hand_rank(hand_type):
 		return hand_type_strings.find(hand_type)
 
-var card_manager:CardManager = CardManager.new()
+var hand_manager:HandManager = HandManager.new()
 
 var shuffled_card_indices:Array = []
 var game_state = "start"
@@ -182,13 +194,13 @@ var game_strings = {
 
 func Deal():
 	if game_state == "start" or game_state == "finished":
-		card_manager.SetLock(false)
+		hand_manager.SetLock(false)
 		shuffled_card_indices.clear()
 		for n in card_texture_names.size():
 			shuffled_card_indices.append(n)
 		shuffled_card_indices.shuffle()
-		for n in card_manager.states.size():
-			var state = card_manager.states[n]
+		for n in hand_manager.hand_states.size():
+			var state = hand_manager.hand_states[n]
 			state.id = shuffled_card_indices[n]
 			var texture_path = "res://cards/" + card_texture_names[state.id] + ".png"
 			state.card_ui_element.SetTexture(GetTexture(texture_path))
@@ -197,14 +209,14 @@ func Deal():
 		var unused_card_id:int = HAND_SIZE
 		
 		# replace the non-locked cards
-		for state in card_manager.states:
+		for state in hand_manager.hand_states:
 			if !state.locked:
 				state.id = shuffled_card_indices[unused_card_id]
 				unused_card_id += 1
 				var texture_path = "res://cards/" + card_texture_names[state.id] + ".png"
 				state.card_ui_element.SetTexture(GetTexture(texture_path))
 		
-		var hand_type:String = card_manager.EvaluateHand(card_texture_names)
+		var hand_type:String = hand_manager.EvaluateHand(card_texture_names)
 		
 		game_state = "finished"
 		game_strings[game_state] = hand_type
@@ -214,10 +226,10 @@ func EventPressed(name:String, id:int):
 		Deal()
 	elif name == "card":
 		if game_state == "firstdeal":
-			card_manager.states[id].locked = !card_manager.states[id].locked 
+			hand_manager.hand_states[id].locked = !hand_manager.hand_states[id].locked 
 
 	# Update visuals
-	for state in card_manager.states:
+	for state in hand_manager.hand_states:
 		state.kept_ui_element.SetVisible(state.locked)
 	get_child(1).text = game_strings[game_state] #Label node
 		
@@ -249,8 +261,8 @@ func _ready():
 		ui_elements.append(card_ui_element)
 		ui_elements.append(kept_ui_element)
 
-		card_manager.states[n].card_ui_element = card_ui_element
-		card_manager.states[n].kept_ui_element = kept_ui_element
+		hand_manager.hand_states[n].card_ui_element = card_ui_element
+		hand_manager.hand_states[n].kept_ui_element = kept_ui_element
 	
 	var dealButton = UIElement.new(
 		"deal",
