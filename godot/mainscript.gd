@@ -90,16 +90,19 @@ func deal():
 			numbers.append(n)
 		numbers.shuffle()
 		for n in card_states.states.size():
-			card_states.states[n].id = numbers[n]
-			var texname = "res://cards/" + cardnames[card_states.states[n].id] + ".png"
-			card_states.states[n].card_ui_element.SetTexture(LoadTexture(texname))
+			var state = card_states.states[n]
+			state.id = numbers[n]
+			var texname = "res://cards/" + cardnames[state.id] + ".png"
+			state.card_ui_element.SetTexture(LoadTexture(texname))
 		gamestate = "firstdeal"
 	elif gamestate == "firstdeal":
-		for n in card_states.states.size():
-			if !card_states.states[n].locked:
-				card_states.states[n].id = numbers[n+5]
-				var texname = "res://cards/" + cardnames[card_states.states[n].id] + ".png"
-				card_states.states[n].card_ui_element.SetTexture(LoadTexture(texname))
+		var unused_card_id:int = 5
+		for state in card_states.states:
+			if !state.locked:
+				state.id = numbers[unused_card_id]
+				unused_card_id += 1
+				var texname = "res://cards/" + cardnames[state.id] + ".png"
+				state.card_ui_element.SetTexture(LoadTexture(texname))
 		gamestate = "finished"
 	
 func Pressed(name:String, id:int):
