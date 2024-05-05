@@ -95,9 +95,9 @@ class CardManager:
 	
 	#evaluates the current hand inside the cardstate
 	func EvaluateHand(card_texture_names) -> String:
-		var ranks = []
-		var suits = []
-		var joker_count = 0
+		var ranks:Array = []
+		var suits:Array = []
+		var joker_count:int = 0
 
 		# Collect ranks and suits, count jokers
 		for state in states:
@@ -110,7 +110,7 @@ class CardManager:
 				suits.append(parts[1])
 
 		# Convert rank strings to values and sort
-		var rank_values = ranks.map(func(r): return "A23456789TJQK".find(r) + 1 if r != "10" else 10)
+		var rank_values = ranks.map(func(r): return "A23456789TJQK".find(r) if r != "10" else 9)
 		rank_values.sort()
 
 		# Determine the hand type
@@ -119,7 +119,7 @@ class CardManager:
 			hand_type = determine_hand_type(rank_values, suits)
 		else:
 			# Try all possible replacements for the joker
-			for possible_rank in range(1, 15):  # Ace can be high or low
+			for possible_rank in 13:
 				for possible_suit in ["hearts", "diamonds", "clubs", "spades"]:
 					var test_ranks = rank_values + [possible_rank]
 					var test_suits = suits + [possible_suit]
@@ -163,7 +163,7 @@ class CardManager:
 		var rank_set:Dictionary = Util.make_set(ranks)
 		if len(rank_set) != len(ranks):
 			return false
-		var is_ace_high:bool = rank_set.has(1) and rank_set.has(10) and rank_set.has(11) and rank_set.has(12) and rank_set.has(13) 
+		var is_ace_high:bool = rank_set.has(0) and rank_set.has(9) and rank_set.has(10) and rank_set.has(11) and rank_set.has(12) 
 			
 		return Util.list_max(ranks) - Util.list_min(ranks) == 4 or is_ace_high  # Ace high straight
 
