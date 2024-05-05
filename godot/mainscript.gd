@@ -81,6 +81,18 @@ class CardManager:
 		for state in states:
 			state.locked = value
 	
+	const hand_type_strings = [
+		"High Card", 
+		"One Pair", 
+		"Two Pair", 
+		"Three of a Kind", 
+		"Straight", 
+		"Flush", 
+		"Full House", 
+		"Four of a Kind", 
+		"Straight Flush"
+	]
+	
 	#evaluates the current hand inside the cardstate
 	func EvaluateHand(card_texture_names) -> String:
 		var ranks = []
@@ -119,7 +131,7 @@ class CardManager:
 		return hand_type
 
 	func determine_hand_type(ranks, suits):
-		var counts = {}
+		var counts:Dictionary = {}
 		for rank in ranks:
 			counts[rank] = counts.get(rank, 0) + 1
 
@@ -130,22 +142,22 @@ class CardManager:
 		var has_straight = is_straight(ranks)
 
 		if has_flush and has_straight:
-			return "Straight Flush"
+			return hand_type_strings[8]
 		elif 4 in values:
-			return "Four of a Kind"
+			return hand_type_strings[7]
 		elif 3 in values and 2 in values:
-			return "Full House"
+			return hand_type_strings[6]
 		elif has_flush:
-			return "Flush"
+			return hand_type_strings[5]
 		elif has_straight:
-			return "Straight"
+			return hand_type_strings[4]
 		elif 3 in values:
-			return "Three of a Kind"
+			return hand_type_strings[3]
 		elif values.count(2) == 2:
-			return "Two Pair"
+			return hand_type_strings[2]
 		elif 2 in values:
-			return "One Pair"
-		return "Nothing :("
+			return hand_type_strings[1]
+		return hand_type_strings[0]
 
 	func is_straight(ranks:Array) -> bool:
 		var rank_set:Dictionary = Util.make_set(ranks)
@@ -156,7 +168,7 @@ class CardManager:
 		return Util.list_max(ranks) - Util.list_min(ranks) == 4 or is_ace_high  # Ace high straight
 
 	func hand_rank(hand_type):
-		return ["Nothing :(", "One Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush"].find(hand_type)
+		return hand_type_strings.find(hand_type)
 
 var card_manager:CardManager = CardManager.new()
 
