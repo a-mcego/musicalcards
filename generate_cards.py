@@ -4,6 +4,8 @@ import numpy as np
 
 def create_card(rank, suit, filename):
     canvas_size = [300, 400]
+    
+    centerify = {"text_anchor":"middle", "dominant_baseline":"middle"}
 
     dwg = svgwrite.Drawing(filename, size=(f'{canvas_size[0]}px', f'{canvas_size[1]}px'), profile='full')
     
@@ -18,27 +20,29 @@ def create_card(rank, suit, filename):
     suit_symbol = suit_symbols[suit]
 
     # Background with rounded corners
-    corner_radius = '20'
-    corner_size = 70
+    corner_radius = 20
     bg_color = svgwrite.rgb(233, 240, 243)
-    border_color = svgwrite.rgb(94, 148, 167)
+    border_color = svgwrite.rgb(148, 148, 167)
     border_width = 5
     dwg.add(dwg.rect(insert=(border_width, border_width), size=(canvas_size[0]-border_width*2, canvas_size[1]-border_width*2), fill=bg_color, rx=corner_radius, ry=corner_radius, stroke=border_color, stroke_width=border_width))
     
-    # Card rank and suit in the top left corner
     text_color = 'black'
     if suit in ['diamonds']:
         text_color = svgwrite.rgb(235, 89, 38)
     if suit in ['hearts']:
         text_color = svgwrite.rgb(228, 27, 73)
-    dwg.add(dwg.text(rank, insert=(20+border_width, corner_size+border_width), fill=text_color, font_size=corner_size))
 
-    dwg.add(dwg.text(suit_symbol, insert=(20+border_width, corner_size*2+border_width), fill=text_color, font_size=corner_size))
+    # Card rank and suit in the top left corner
+    rank_pos = (corner_radius+15, corner_radius+30)
+    inv_rank_pos = (canvas_size[0]-rank_pos[0], canvas_size[1]-rank_pos[1])
+    symbol_shift = 55
+    
+    dwg.add(dwg.text(rank, insert=rank_pos, fill=text_color, font_size=60, letter_spacing="-5",**centerify))
+    dwg.add(dwg.text(suit_symbol, insert=(rank_pos[0], rank_pos[1]+symbol_shift), fill=text_color, font_size=60, **centerify))
     
     # Card rank and suit in the bottom right corner (rotated)
-    # Adjusting the position to ensure it's visible and correctly placed
-    dwg.add(dwg.text(rank, insert=(260-border_width, 440-border_width-corner_size), fill=text_color, font_size=corner_size, transform=f'rotate(180, {270-border_width}, {420-border_width-corner_size})'))
-    dwg.add(dwg.text(suit_symbol, insert=(260-border_width, 370-border_width-corner_size), fill=text_color, font_size=corner_size, transform=f'rotate(180, {270-border_width}, {350-border_width-corner_size})'))
+    dwg.add(dwg.text(rank, insert=inv_rank_pos, fill=text_color, font_size=60, transform=f'rotate(180, {inv_rank_pos[0]}, {inv_rank_pos[1]})', letter_spacing="-5", **centerify))
+    dwg.add(dwg.text(suit_symbol, insert=(inv_rank_pos[0], inv_rank_pos[1]-symbol_shift), fill=text_color, font_size=60, transform=f'rotate(180, {inv_rank_pos[0]}, {inv_rank_pos[1]-symbol_shift})', **centerify))
     
     # Handle face cards separately
     # Face card graphics
@@ -66,28 +70,54 @@ def create_card(rank, suit, filename):
     else:
         # Add suit symbols in the center for numbered cards
         num_symbols = int(rank) if rank.isdigit() else 1
-        symbol_x, symbol_y = 100, 100
+        symbol_x, symbol_y = 85, 70
+        topleft = (symbol_x,symbol_y)
+        bottomright = (canvas_size[0]-symbol_x, canvas_size[1]-symbol_y)
+        sym_size = (bottomright[0]-topleft[0], bottomright[1]-topleft[1])
+        if num_symbols == 1:
+            dwg.add(dwg.text(suit_symbol, insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='240', font_family='Arial', **centerify))
+
+        elif num_symbols >= 2 and num_symbols < 11:
+            drawpoints = []
+            if num_symbols == 2:
+                drawpoints.extend([(0.5,0.0), (0.5,1.0)])
+            elif num_symbols == 3:
+                drawpoints.extend([(0.5,0.0), (0.5,0.5), (0.5,1.0)])
+            elif num_symbols == 4:
+                drawpoints.extend([(0.0,0.0), (0.0,1.0), (1.0,0.0), (1.0,1.0)])
+            elif num_symbols == 5:
+                drawpoints.extend([(0.0,0.0), (0.0,1.0), (1.0,0.0), (1.0,1.0), (0.5,0.5)])
+            elif num_symbols == 6:
+                drawpoints.extend([(0.0,0.0), (0.0, 0.5), (0.0,1.0), (1.0,0.0), (1.0, 0.5), (1.0,1.0)])
+            elif num_symbols == 7:
+                drawpoints.extend([(0.0,0.0), (0.0, 0.5), (0.0,1.0), (1.0,0.0), (1.0, 0.5), (1.0,1.0), (0.5,0.25)])
+            elif num_symbols == 8:
+                drawpoints.extend([(0.0,0.0), (0.0, 0.5), (0.0,1.0), (1.0,0.0), (1.0, 0.5), (1.0,1.0), (0.5,0.25), (0.5,0.75)])
+            elif num_symbols == 9:
+                drawpoints.extend([(0.0,0.0), (0.0,0.333), (0.0,0.667), (0.0,1.0), (1.0,0.0), (1.0,0.333), (1.0,0.667), (1.0,1.0), (0.5,0.5)])
+            elif num_symbols == 10:
+                drawpoints.extend([(0.0,0.0), (0.0,0.333), (0.0,0.667), (0.0,1.0), (1.0,0.0), (1.0,0.333), (1.0,0.667), (1.0,1.0), (0.5,0.166), (0.5,0.834)])
         
-        if num_symbols % 2 == 1:
-            dwg.add(dwg.text(suit_symbol, insert=(150, 200), fill=text_color, font_size='60', font_family='Arial', text_anchor="middle", dominant_baseline="middle"))
-            
-        if num_symbols >= 2 and num_symbols < 4:
-            step_y = 100  # Distribute symbols vertically
-            for i in range(num_symbols):
-                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, symbol_y + step_y * (i % (num_symbols // 2))), fill=text_color, font_size='60', font_family='Arial',text_anchor="middle", dominant_baseline="middle"))
-                if i == num_symbols // 2 - 1:
-                    symbol_x = 200  # Move to the right side for the next symbols
-        if num_symbols >= 4:
+            for dp in drawpoints:
+                xpos = topleft[0]+sym_size[0]*dp[0]
+                ypos = topleft[1]+sym_size[1]*dp[1]
+                dwg_params = {}
+                if dp[1] > 0.5:
+                    dwg_params['transform'] = f'rotate(180, {xpos}, {ypos})'
+                dwg.add(dwg.text(suit_symbol, insert=(xpos, ypos), fill=text_color, font_size='90', font_family='Arial',text_anchor="middle", dominant_baseline="middle", **dwg_params))
+
+        elif num_symbols >= 11:
+            if num_symbols % 2 == 1:
+                dwg.add(dwg.text(suit_symbol, insert=(canvas_size[0]*0.5, canvas_size[1]*0.5), fill=text_color, font_size='60', font_family='Arial', **centerify))
+                
             step_y = 200 / ((num_symbols-2) // 2)  # Distribute symbols vertically
             for i in range(num_symbols):
                 ypos = symbol_y + step_y * (i % (num_symbols // 2))
-
                 dwg_params = {}
-
                 if ypos > canvas_size[1]//2:
-                    dwg_params['transform_comp'] = f'rotate(180, {symbol_x}, {ypos})'
+                    dwg_params['transform'] = f'rotate(180, {symbol_x}, {ypos})'
             
-                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, ypos), fill=text_color, font_size='60', font_family='Arial',text_anchor="middle", dominant_baseline="middle", **dwg_params))
+                dwg.add(dwg.text(suit_symbol, insert=(symbol_x, ypos), fill=text_color, font_size='60', font_family='Arial',**centerify, **dwg_params))
                 if i == num_symbols // 2 - 1:
                     symbol_x = 200  # Move to the right side for the next symbols
 
